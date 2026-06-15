@@ -1,0 +1,66 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400&family=Public+Sans:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #f5f9fc;
+}
+
+body {
+  background-color: var(--paper);
+  color: #0f1f2e;
+  font-family: "Public Sans", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* botões e áreas tocáveis não selecionam texto ao tocar */
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* impedir que conteúdo largo (mapas, tabelas) rebente o ecrã */
+img, svg, video, canvas { max-width: 100%; }
+
+/* textura subtil moderna (pontos azulados muito ténues) */
+.grain {
+  background-image: radial-gradient(circle at 1px 1px, rgba(10, 108, 255, 0.04) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+.field-label {
+  @apply block text-sm font-semibold text-soil mb-1.5;
+}
+.field-input {
+  @apply w-full rounded-lg border border-slate/25 bg-white px-3 py-3 text-ink
+         focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/25;
+  font-size: 16px; /* evita zoom automático no iOS */
+}
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-lg bg-ocean px-5 py-3
+         font-semibold text-white transition hover:bg-ocean2 disabled:opacity-50;
+  min-height: 48px; /* alvo de toque confortável */
+  touch-action: manipulation;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center rounded-lg border border-ocean/30
+         px-4 py-3 font-medium text-ocean transition hover:bg-sky;
+  min-height: 48px;
+  touch-action: manipulation;
+}
+
+/* Impressão: relatório limpo em PDF */
+@media print {
+  .btn-primary, .btn-ghost, nav, a[href^="/admin"] { display: none !important; }
+  body { background: white; }
+  .grain { background-image: none; }
+  textarea {
+    border: none !important;
+    resize: none;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+}

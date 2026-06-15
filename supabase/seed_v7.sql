@@ -1,0 +1,17 @@
+-- ============================================================
+-- Seed v7 — Regras de elegibilidade AFINADAS (números reais)
+-- Corre DEPOIS de seed_v6.sql.
+-- Fonte: bancos + CGD + Santander + DL 44/2024 (jun 2026).
+-- ============================================================
+
+insert into eligibility_rules (funding_id,label,field,operator,value,value2,severity,explain_pass,explain_fail,sort_order) values ((select id from funding_opportunities where name='IMT Jovem + Garantia Pública (1.ª habitação)' order by created_at desc limit 1),'Rendimento até ao 8.º escalão IRS','annual_income_eur','lte','86634',null,'eliminatoria','Rendimento dentro do limite do 8.º escalão (~86.634€/ano).','Acima de ~86.634€/ano (8.º escalão IRS 2026) não acede à garantia pública. Para 2 titulares, conta a média por titular.',10);
+insert into eligibility_rules (funding_id,label,field,operator,value,value2,severity,explain_pass,explain_fail,sort_order) values ((select id from funding_opportunities where name='IMT Jovem + Garantia Pública (1.ª habitação)' order by created_at desc limit 1),'Imóvel até 450.000€ (garantia)','property_price_eur','lte','450000',null,'aviso','Preço dentro do limite da garantia pública (450.000€).','Acima de 450.000€ não há garantia pública (a isenção de IMT ainda é parcial até 660.982€).',10);
+insert into eligibility_rules (funding_id,label,field,operator,value,value2,severity,explain_pass,explain_fail,sort_order) values ((select id from funding_opportunities where name='IMT Jovem + Garantia Pública (1.ª habitação)' order by created_at desc limit 1),'Nunca usou a Garantia do Estado','has_public_guarantee_before','is_false',null,null,'eliminatoria','Ainda não usou a garantia — elegível nesse ponto.','A Garantia Pública só pode ser usada uma vez. Se já usaste, não podes de novo.',10);
+insert into eligibility_rules (funding_id,label,field,operator,value,value2,severity,explain_pass,explain_fail,sort_order) values ((select id from funding_opportunities where name='IMT Jovem + Garantia Pública (1.ª habitação)' order by created_at desc limit 1),'Não é proprietário de habitação','owns_home','is_false',null,null,'eliminatoria','Não tens outra habitação — requisito cumprido.','Não podes ser proprietário de outra habitação (nem parcialmente).',10);
+
+insert into eligibility_rules (funding_id,label,field,operator,value,value2,severity,explain_pass,explain_fail,sort_order) values ((select id from funding_opportunities where name='Investe Jovem (criação de empresa por jovens)' order by created_at desc limit 1),'Inscrito no IEFP','iefp_registered','is_true',null,null,'aviso','Inscrição no IEFP — requisito coberto.','Investe Jovem (Garantia Jovem) exige normalmente inscrição no IEFP. Confirma.',10);
+
+insert into eligibility_rules (funding_id,label,field,operator,value,value2,severity,explain_pass,explain_fail,sort_order) values ((select id from funding_opportunities where name='Microcrédito / MicroInvest (pequeno negócio)' order by created_at desc limit 1),'Inscrito no IEFP (ou perfil elegível)','iefp_registered','is_true',null,null,'aviso','Perfil compatível com a linha.','Dirigido a desempregados inscritos, jovens à procura do 1.º emprego ou independentes de baixo rendimento.',10);
+
+-- Afinar nota do montante de habitação
+update funding_amounts set notes='Estimativa de poupança em IMT+IS. Isenção total até 330.539€, parcial até 660.982€. Usa simulador oficial da AT para o valor exato.' where label='Isenção IMT+IS (estimativa)';
