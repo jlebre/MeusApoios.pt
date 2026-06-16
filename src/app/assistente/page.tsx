@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -88,7 +89,7 @@ function AssistenteInner() {
           href="/"
           className="font-display text-xl font-black tracking-tight text-soil"
         >
-          Meus<span className="text-wheat">Apoios</span>
+          <BrandLogo />
         </Link>
         <span className="rounded-full bg-wheat/20 px-3 py-1 text-xs font-semibold text-clay">
           Assistente · Premium

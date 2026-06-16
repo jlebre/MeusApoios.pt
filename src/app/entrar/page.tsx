@@ -6,6 +6,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getBrowserClient } from "@/lib/supabase-browser";
+import BrandLogo from "@/components/BrandLogo";
 
 function EntrarInner() {
   const params = useSearchParams();
@@ -55,7 +56,7 @@ function EntrarInner() {
         href="/"
         className="font-display text-xl font-black tracking-tight text-soil"
       >
-        Meus<span className="text-wheat">Apoios</span>
+        <BrandLogo />
       </Link>
 
       <h1 className="mt-10 font-display text-3xl font-black text-soil">

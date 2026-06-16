@@ -7,6 +7,7 @@ import {
   type Rule,
   type Amount,
 } from "@/lib/eligibility";
+import { BRAND } from "@/lib/brand";
 
 // Assistente de IA — premium.
 //
@@ -72,7 +73,7 @@ ${grounded
   .map((g) => `- ${g.name}: ${g.verdict}, estimativa ~${g.estimate}€`)
   .join("\n")}`;
 
-    const systemPrompt = `És um assistente do MeusApoios que ajuda pessoas a navegar apoios e subsídios em Portugal.
+    const systemPrompt = `És um assistente do ${BRAND.name} que ajuda pessoas a navegar apoios e subsídios em Portugal.
 REGRAS IMPORTANTES:
 - Baseia-te APENAS no contexto factual fornecido sobre elegibilidade e valores. NUNCA inventes apoios, valores ou condições.
 - Se não souberes, diz que é preciso confirmar no aviso oficial.
@@ -92,7 +93,7 @@ ${factContext}`;
               .join(", ")}. ` +
             `Para avançar, o melhor próximo passo é confirmar as condições no aviso oficial de cada um e reunir os documentos da checklist. ` +
             `(Nota: o assistente completo de IA ativa-se quando a chave da API estiver configurada.)`
-          : `Com as respostas atuais não encontrei apoios claramente compatíveis. Pode valer a pena marcares uma conversa para analisarmos o teu caso com mais detalhe.`;
+          : `Com as respostas atuais não encontrei apoios claramente compatíveis para este perfil. Podes explorar o catálogo de apoios em /apoios para ver o que está disponível, ou fazer um novo diagnóstico com mais detalhe.`;
       return NextResponse.json({ reply: fallback });
     }
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase";
+import BrandLogo from "@/components/BrandLogo";
 import {
   evaluateFund,
   simulateAmount,
@@ -91,7 +92,7 @@ export default async function Resultado({
         href="/"
         className="font-display text-xl font-black tracking-tight text-soil"
       >
-        Meus<span className="text-wheat">Apoios</span>
+        <BrandLogo />
       </Link>
 
       <h1 className="mt-8 font-display text-3xl sm:text-4xl font-black text-soil">
@@ -130,7 +131,7 @@ export default async function Resultado({
           {/* Lista esbatida com os nomes tapados */}
           <div className="relative">
             <div className="space-y-3" aria-hidden>
-              {candidataveis.slice(0, 3).map(({ fund, verdict, sim }, i) => (
+              {candidataveis.slice(0, 3).map(({ verdict, sim }, i) => (
                 <div
                   key={i}
                   className="overflow-hidden rounded-2xl border border-clay/20 bg-white/60 blur-sm select-none"
@@ -179,10 +180,10 @@ export default async function Resultado({
               </div>
               <p className="mt-3 text-xs text-ink/50">
                 Ou{" "}
-                <Link href={`/conversa?project=${project.id}`} className="text-clay underline">
-                  marca uma conversa
+                <Link href="/apoios" className="text-clay underline">
+                  explora todos os apoios disponíveis
                 </Link>{" "}
-                se preferires falar primeiro.
+                antes de decidires.
               </p>
             </div>
           </div>
@@ -197,11 +198,17 @@ export default async function Resultado({
           </h2>
           <p className="mt-2 text-ink/70">
             Com as respostas atuais, nenhum apoio surge como diretamente
-            elegível. Isto pode mudar com mais detalhe — vale a pena falar.
+            elegível. Podes explorar outros apoios disponíveis ou tentar
+            outro diagnóstico com informação mais detalhada.
           </p>
-          <Link href={`/conversa?project=${project.id}`} className="btn-primary mt-5">
-            Marcar uma conversa
-          </Link>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link href="/apoios" className="btn-primary">
+              Explorar todos os apoios
+            </Link>
+            <Link href="/areas" className="btn-ghost">
+              Fazer novo diagnóstico
+            </Link>
+          </div>
         </div>
       )}
 
@@ -486,14 +493,14 @@ export default async function Resultado({
 
           <div className="rounded-2xl border border-clay/20 bg-cream/60 p-6 text-center">
             <h2 className="font-display text-xl font-black text-soil">
-              Tens dúvidas sobre o teu caso?
+              Queres explorar mais apoios?
             </h2>
             <p className="mt-2 text-ink/70">
-              Se quiseres falar com alguém antes de avançar, marca uma conversa
-              sem compromisso.
+              Vê o catálogo completo de apoios disponíveis — filtra por área,
+              estado ou região para encontrares o que se aplica ao teu caso.
             </p>
-            <Link href={`/conversa?project=${project.id}`} className="btn-primary mt-5">
-              Marcar uma conversa
+            <Link href="/apoios" className="btn-primary mt-5">
+              Ver todos os apoios
             </Link>
           </div>
         </div>

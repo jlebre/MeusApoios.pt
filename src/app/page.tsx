@@ -1,4 +1,6 @@
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
+import { BRAND } from "@/lib/brand";
 
 export default function Home() {
   return (
@@ -6,7 +8,7 @@ export default function Home() {
       {/* Cabeçalho */}
       <header className="flex items-center justify-between">
         <div className="font-display text-2xl font-black tracking-tight text-soil">
-          Meus<span className="text-wheat">Apoios</span>
+          <BrandLogo />
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -92,7 +94,7 @@ export default function Home() {
           A diferença não é listar apoios. É a segunda leitura.
         </h2>
         <p className="mt-4 max-w-2xl text-cream/80">
-          Qualquer site te diz que um apoio existe. Nós dizemos-te porque pode
+          Qualquer site te diz que um apoio existe. O {BRAND.name} diz-te porque pode
           não servir, que confirmação falta, e o que desbloqueia a candidatura.
           Cada recomendação responde sempre a três coisas:
         </p>
@@ -125,20 +127,21 @@ export default function Home() {
           Fazer o meu diagnóstico
         </Link>
         <p className="mt-4 text-ink/60">
-          Preferes falar primeiro?{" "}
-          <Link href="/conversa" className="font-semibold text-clay underline">
-            Marca uma conversa
-          </Link>
+          Ou{" "}
+          <Link href="/apoios" className="font-semibold text-clay underline">
+            explora os apoios disponíveis
+          </Link>{" "}
+          antes de começar.
         </p>
       </section>
 
       <footer className="mt-24 border-t border-clay/20 pt-8 text-sm text-ink/50">
         <p>
-          MeusApoios é uma ferramenta de apoio à decisão. Não substitui
+          {BRAND.name} é uma ferramenta de apoio à decisão. Não substitui
           validação legal/técnica dos avisos nem aconselhamento de um consultor
           acreditado.
         </p>
-        <p className="mt-2">© {new Date().getFullYear()} MeusApoios · v0.1 ·{" "}
+        <p className="mt-2">© {new Date().getFullYear()} {BRAND.name} · v0.1 ·{" "}
           <Link href="/termos" className="text-clay underline">
             Termos e tratamento de dados
           </Link>

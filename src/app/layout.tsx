@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { BRAND } from "@/lib/brand";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -9,9 +10,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "MeusApoios — descobre a que apoios tens direito",
-  description:
-    "Diagnóstico claro de apoios, riscos e próximos passos. Agricultura, habitação, energia, empresas, formação e apoios sociais em Portugal.",
+  title: `${BRAND.name} — ${BRAND.tagline}`,
+  description: BRAND.description,
 };
 
 export default function RootLayout({

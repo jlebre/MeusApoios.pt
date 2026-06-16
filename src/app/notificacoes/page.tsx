@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 
 export default function Notificacoes() {
   const [email, setEmail] = useState("");
@@ -57,7 +58,7 @@ export default function Notificacoes() {
         href="/"
         className="font-display text-xl font-black tracking-tight text-soil"
       >
-        Meus<span className="text-wheat">Apoios</span>
+        <BrandLogo />
       </Link>
 
       <h1 className="mt-8 font-display text-3xl font-black text-soil">

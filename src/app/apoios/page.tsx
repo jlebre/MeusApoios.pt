@@ -1,0 +1,47 @@
+import { createServiceClient } from "@/lib/supabase";
+import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
+import ApoiosClient from "./ApoiosClient";
+
+export const dynamic = "force-dynamic";
+
+export default async function Apoios() {
+  const supabase = createServiceClient();
+
+  const [{ data: funds }, { data: domains }] = await Promise.all([
+    supabase
+      .from("funding_opportunities")
+      .select("id, name, program, entity, summary, beneficiaries, status, complexity, closes_at, opens_at, domain_id")
+      .neq("publish_status", "rascunho")
+      .order("name"),
+    supabase.from("domains").select("id, slug, label, icon").order("sort_order"),
+  ]);
+
+  return (
+    <main className="mx-auto max-w-5xl px-6 py-10">
+      <Link href="/" className="font-display text-xl font-black tracking-tight text-soil">
+        <BrandLogo />
+      </Link>
+
+      <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl font-black text-soil">
+            Apoios disponíveis
+          </h1>
+          <p className="mt-1 text-ink/70">
+            Explora o catálogo de apoios públicos. Filtra por área, estado ou
+            pesquisa por texto.
+          </p>
+        </div>
+        <Link href="/areas" className="btn-primary shrink-0">
+          Fazer diagnóstico
+        </Link>
+      </div>
+
+      <ApoiosClient
+        funds={funds ?? []}
+        domains={domains ?? []}
+      />
+    </main>
+  );
+}

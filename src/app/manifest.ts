@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
+import { BRAND } from "@/lib/brand";
 
 // Manifesto PWA: permite "Adicionar ao ecrã principal" no Android/iOS,
 // com aparência de app (cor, nome, ícone).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "MeusApoios",
-    short_name: "MeusApoios",
-    description:
-      "Descobre a que apoios tens direito em Portugal.",
+    name: BRAND.name,
+    short_name: BRAND.name,
+    description: BRAND.tagline,
     start_url: "/",
     display: "standalone",
     background_color: "#f5f9fc",

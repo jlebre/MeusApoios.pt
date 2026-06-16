@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { BRAND } from "@/lib/brand";
 
 // Proteção mínima do backoffice por Basic Auth.
 // Suficiente para o MVP / uso pessoal. Antes de partilhares com terceiros,
@@ -16,7 +17,7 @@ export function middleware(req: NextRequest) {
     }
     return new NextResponse("Autenticação necessária", {
       status: 401,
-      headers: { "WWW-Authenticate": 'Basic realm="MeusApoios Admin"' },
+      headers: { "WWW-Authenticate": `Basic realm="${BRAND.name} Admin"` },
     });
   }
   return NextResponse.next();

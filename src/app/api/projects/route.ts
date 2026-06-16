@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase";
+import { calculateAge } from "@/lib/utils";
 
 // Mapa de campos conhecidos de 'projects' e o seu tipo, para converter
 // as respostas dinâmicas do questionário no formato certo.
@@ -20,7 +21,7 @@ const TEXT_FIELDS = [
   "location_district", "location_municipality", "water_notes",
   "crops", "animals", "buildings", "goal", "timeline",
   "production_mode", "investment_type", "employment_status",
-  "energy_certificate",
+  "energy_certificate", "birth_date",
 ];
 
 const toBool = (v: any) =>
@@ -73,6 +74,15 @@ export async function POST(req: Request) {
     for (const f of NUM_FIELDS) if (f in b) record[f] = toNum(b[f]);
     for (const f of TEXT_FIELDS) if (f in b) record[f] = b[f] || null;
 
+    // Calcular promoter_age a partir de birth_date se não veio explicitamente
+    if (b.birth_date && !record.promoter_age) {
+      const age = calculateAge(b.birth_date);
+      if (age !== null) {
+        record.promoter_age = age;
+        record.birth_year_age = age;
+      }
+    }
+
     const { data, error } = await supabase
       .from("projects")
       .insert(record)
@@ -93,7 +103,13 @@ export async function POST(req: Request) {
       if ("contact_name" in b) profilePatch.full_name = b.contact_name || null;
       if ("contact_email" in b) profilePatch.email = b.contact_email || null;
       if ("contact_phone" in b) profilePatch.phone = b.contact_phone || null;
-      if ("promoter_age" in b) profilePatch.promoter_age = toNum(b.promoter_age);
+      if ("birth_date" in b) {
+        profilePatch.birth_date = b.birth_date || null;
+        const age = calculateAge(b.birth_date);
+        if (age !== null) profilePatch.promoter_age = age;
+      }
+      if ("promoter_age" in b && !b.birth_date)
+        profilePatch.promoter_age = toNum(b.promoter_age);
       if ("employment_status" in b)
         profilePatch.employment_status = b.employment_status || null;
       if ("location_district" in b)

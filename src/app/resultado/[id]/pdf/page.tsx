@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase";
+import BrandLogo from "@/components/BrandLogo";
+import { BRAND } from "@/lib/brand";
 import {
   evaluateFund,
   simulateAmount,
@@ -73,7 +75,7 @@ export default async function ResultadoPDF({
       {/* Cabeçalho do relatório */}
       <header className="border-b-2 border-soil pb-4">
         <div className="font-display text-2xl font-black text-soil">
-          Meus<span className="text-wheat">Apoios</span>
+          <BrandLogo />
         </div>
         <h1 className="mt-2 font-display text-2xl font-black text-soil">
           Relatório de apoios — {project.domains?.label || "Diagnóstico"}
@@ -146,7 +148,7 @@ export default async function ResultadoPDF({
 
       <footer className="mt-8 border-t border-clay/30 pt-4 text-xs text-ink/50">
         <p>
-          Documento gerado pelo MeusApoios. Ferramenta de apoio à decisão, sem
+          Documento gerado pelo {BRAND.name}. Ferramenta de apoio à decisão, sem
           garantias. Confirma sempre as condições, valores e prazos no aviso
           oficial de cada apoio antes de qualquer decisão ou despesa.
         </p>

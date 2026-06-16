@@ -5,12 +5,24 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
+import BrandLogo from "@/components/BrandLogo";
+import { calculateAge, EMPLOYMENT_STATUS_OPTIONS } from "@/lib/utils";
 
-const TRANSVERSAIS = [
+type FieldDef =
+  | { field: string; label: string; type: "text" | "number" | "date" }
+  | { field: string; label: string; type: "select"; options: string[] }
+  | { field: string; label: string; type: "yesno" };
+
+const TRANSVERSAIS: FieldDef[] = [
   { field: "full_name", label: "Nome", type: "text" },
   { field: "phone", label: "Telefone", type: "text" },
-  { field: "promoter_age", label: "Idade", type: "number" },
-  { field: "employment_status", label: "Situação profissional", type: "text" },
+  { field: "birth_date", label: "Data de nascimento", type: "date" },
+  {
+    field: "employment_status",
+    label: "Situação profissional",
+    type: "select",
+    options: EMPLOYMENT_STATUS_OPTIONS,
+  },
   { field: "location_district", label: "Distrito", type: "text" },
   { field: "location_municipality", label: "Concelho", type: "text" },
   { field: "annual_income_eur", label: "Rendimento anual (€)", type: "number" },
@@ -54,7 +66,7 @@ export default function Perfil() {
       }
       setProfile(prof || {});
 
-      // histórico de diagnósticos (com nome do domínio)
+      // histórico de diagnósticos
       const { data: projs } = await supabase
         .from("projects")
         .select("*, domains(label, slug)")
@@ -71,10 +83,24 @@ export default function Perfil() {
       data: { session },
     } = await supabase.auth.getSession();
     const patch: any = { updated_at: new Date().toISOString() };
+
     for (const f of TRANSVERSAIS) {
       const v = profile[f.field];
-      patch[f.field] = f.type === "number" ? (v === "" || v == null ? null : Number(v)) : v || null;
+      if (f.type === "number") {
+        patch[f.field] = v === "" || v == null ? null : Number(v);
+      } else {
+        patch[f.field] = v || null;
+      }
     }
+
+    // Calcular e guardar promoter_age a partir de birth_date
+    if (patch.birth_date) {
+      const age = calculateAge(patch.birth_date);
+      if (age !== null) patch.promoter_age = age;
+    }
+
+    patch.tax_situation_ok = profile.tax_situation_ok ?? null;
+
     await supabase
       .from("shared_profiles")
       .update(patch)
@@ -101,6 +127,8 @@ export default function Perfil() {
       </main>
     );
 
+  const ageDisplay = profile.birth_date ? calculateAge(profile.birth_date) : null;
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <div className="flex items-center justify-between">
@@ -108,7 +136,7 @@ export default function Perfil() {
           href="/"
           className="font-display text-xl font-black tracking-tight text-soil"
         >
-          Meus<span className="text-wheat">Apoios</span>
+          <BrandLogo />
         </Link>
         <button onClick={signOut} className="text-sm text-clay underline">
           Sair
@@ -133,16 +161,40 @@ export default function Perfil() {
           {TRANSVERSAIS.map((f) => (
             <label key={f.field} className="block">
               <span className="field-label">{f.label}</span>
-              <input
-                className="field-input"
-                type={f.type}
-                value={profile[f.field] ?? ""}
-                onChange={(e) =>
-                  setProfile({ ...profile, [f.field]: e.target.value })
-                }
-              />
+              {f.type === "select" ? (
+                <select
+                  className="field-input"
+                  value={profile[f.field] ?? ""}
+                  onChange={(e) =>
+                    setProfile({ ...profile, [f.field]: e.target.value })
+                  }
+                >
+                  <option value="">Seleciona…</option>
+                  {f.options.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="field-input"
+                  type={f.type}
+                  max={f.type === "date" ? new Date().toISOString().split("T")[0] : undefined}
+                  value={profile[f.field] ?? ""}
+                  onChange={(e) =>
+                    setProfile({ ...profile, [f.field]: e.target.value })
+                  }
+                />
+              )}
+              {f.field === "birth_date" && ageDisplay !== null && (
+                <span className="mt-1 block text-xs text-ink/50">
+                  {ageDisplay} anos
+                </span>
+              )}
             </label>
           ))}
+
           <label className="block sm:col-span-2">
             <span className="field-label">Situação fiscal regularizada?</span>
             <div className="flex gap-2">

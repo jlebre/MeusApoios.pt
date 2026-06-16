@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { BRAND } from "@/lib/brand";
 
 // Cria uma sessão de checkout Stripe para desbloquear um diagnóstico.
 // Precisa de STRIPE_SECRET_KEY e NEXT_PUBLIC_BASE_URL no .env.local.
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
         {
           price_data: {
             currency: "eur",
-            product_data: { name: "MeusApoios — Relatório completo" },
+            product_data: { name: `${BRAND.name} — Relatório completo` },
             unit_amount: 1900, // 19,00 €
           },
           quantity: 1,

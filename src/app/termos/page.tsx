@@ -1,7 +1,9 @@
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
+import { BRAND } from "@/lib/brand";
 
 export const metadata = {
-  title: "Termos e Tratamento de Dados — MeusApoios",
+  title: `Termos e Tratamento de Dados — ${BRAND.name}`,
 };
 
 export default function Termos() {
@@ -11,7 +13,7 @@ export default function Termos() {
         href="/"
         className="font-display text-xl font-black tracking-tight text-soil"
       >
-        Meus<span className="text-wheat">Apoios</span>
+        <BrandLogo />
       </Link>
 
       <h1 className="mt-8 font-display text-3xl font-black text-soil">
@@ -22,9 +24,9 @@ export default function Termos() {
       </p>
 
       <div className="mt-8 space-y-6 text-ink/80">
-        <Section title="O que é o MeusApoios">
+        <Section title={`O que é o ${BRAND.name}`}>
           <p>
-            O MeusApoios é uma <strong>ferramenta de apoio à decisão</strong>.
+            O {BRAND.name} é uma <strong>ferramenta de apoio à decisão</strong>.
             Ajuda-te a perceber que apoios podem fazer sentido para o teu caso,
             com base nas respostas que dás. Não é um serviço oficial, não está
             associado a nenhuma entidade pública, e não substitui o aviso
