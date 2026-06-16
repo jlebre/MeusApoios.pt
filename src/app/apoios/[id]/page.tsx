@@ -140,6 +140,60 @@ export default async function ApoioDetalhe({
         </section>
       )}
 
+      {/* Quem provavelmente não deve perder tempo */}
+      {rules.filter((r: any) => r.severity === "eliminatoria").length > 0 && (
+        <section className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5">
+          <h2 className="font-display text-lg font-bold text-red-800">
+            Quem provavelmente não deve perder tempo
+          </h2>
+          <p className="mt-1 text-xs text-red-700">
+            Estas condições são eliminatórias — se não as cumpres, este apoio provavelmente não se aplica ao teu caso.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {rules
+              .filter((r: any) => r.severity === "eliminatoria")
+              .map((r: any) => (
+                <li key={r.id} className="flex gap-2 text-sm">
+                  <span aria-hidden className="shrink-0">⛔</span>
+                  <span className="text-red-900">
+                    <span className="font-semibold">{r.label}</span>
+                    {r.explain_fail && (
+                      <span className="block text-xs text-red-700 mt-0.5">
+                        {r.explain_fail}
+                      </span>
+                    )}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Riscos / condições escondidas — visibilidade alta */}
+      {(fund.hidden_conditions || fund.risks || fund.incompatibilities) && (
+        <section className="mt-6 rounded-xl border border-wheat/50 bg-wheat/10 p-5">
+          <h2 className="font-display text-lg font-bold text-soil">
+            O que pode correr mal
+          </h2>
+          <p className="mt-0.5 text-xs text-ink/55">Pontos que normalmente não se veem à primeira leitura.</p>
+          {fund.hidden_conditions && (
+            <p className="mt-3 text-sm text-ink/80 leading-relaxed">
+              <strong>Condições escondidas:</strong> {fund.hidden_conditions}
+            </p>
+          )}
+          {fund.risks && (
+            <p className="mt-2 text-sm text-ink/80 leading-relaxed">
+              <strong>Riscos:</strong> {fund.risks}
+            </p>
+          )}
+          {fund.incompatibilities && (
+            <p className="mt-2 text-sm text-ink/80 leading-relaxed">
+              <strong>Não acumulável com:</strong> {fund.incompatibilities}
+            </p>
+          )}
+        </section>
+      )}
+
       {/* Zona geográfica */}
       {zones.length > 0 && (
         <section className="mt-6">
@@ -203,30 +257,6 @@ export default async function ApoioDetalhe({
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {/* Riscos / condições escondidas */}
-      {(fund.hidden_conditions || fund.risks) && (
-        <section className="mt-6 rounded-xl border border-wheat/50 bg-wheat/10 p-5">
-          <h2 className="font-display text-lg font-bold text-soil">
-            O que normalmente não se vê
-          </h2>
-          {fund.hidden_conditions && (
-            <p className="mt-2 text-sm text-ink/80 leading-relaxed">
-              <strong>Condições escondidas:</strong> {fund.hidden_conditions}
-            </p>
-          )}
-          {fund.risks && (
-            <p className="mt-2 text-sm text-ink/80 leading-relaxed">
-              <strong>Riscos:</strong> {fund.risks}
-            </p>
-          )}
-          {fund.incompatibilities && (
-            <p className="mt-2 text-sm text-ink/80 leading-relaxed">
-              <strong>Não acumulável com:</strong> {fund.incompatibilities}
-            </p>
-          )}
         </section>
       )}
 

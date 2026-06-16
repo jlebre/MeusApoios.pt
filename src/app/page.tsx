@@ -37,6 +37,11 @@ export default function Home() {
         <p className="mt-3 text-sm text-ink/50">
           Sem compromisso. Recebes uma primeira leitura sem pagar nada.
         </p>
+        <p className="mt-3 max-w-lg text-xs text-ink/40">
+          Não somos uma entidade pública. Não substituímos o aviso oficial nem
+          aconselhamento técnico acreditado. Ajudamos-te a perceber por onde
+          começar e o que confirmar antes de avançares.
+        </p>
       </section>
 
       {/* Como funciona */}

@@ -27,6 +27,51 @@ const ORDER: Record<string, number> = {
   inelegivel: 3,
 };
 
+const SEMAPHORE: Record<
+  string,
+  { icon: string; label: string; color: string; bg: string; border: string }
+> = {
+  elegivel: {
+    icon: "🟢",
+    label: "Compatível",
+    color: "#2d6e2d",
+    bg: "#f0fdf4",
+    border: "#86efac",
+  },
+  em_risco: {
+    icon: "🟡",
+    label: "Compatível com ressalvas",
+    color: "#92400e",
+    bg: "#fffbeb",
+    border: "#fcd34d",
+  },
+  confirmar: {
+    icon: "🔵",
+    label: "Necessita confirmação",
+    color: "#1e40af",
+    bg: "#eff6ff",
+    border: "#93c5fd",
+  },
+  inelegivel: {
+    icon: "🔴",
+    label: "Baixa compatibilidade",
+    color: "#9b2c2c",
+    bg: "#fef2f2",
+    border: "#fca5a5",
+  },
+};
+
+const NEXT_STEP: Record<string, string> = {
+  elegivel:
+    "Acede ao aviso oficial, confirma prazos e inicia a candidatura. Não faças despesas elegíveis antes de receberes aprovação.",
+  em_risco:
+    "Confirma primeiro os pontos assinalados antes de avançar. Só inicia a candidatura depois de esclarecer cada ressalva.",
+  confirmar:
+    "A informação disponível é insuficiente para determinar elegibilidade. Consulta o aviso oficial diretamente.",
+  inelegivel:
+    "Este apoio não parece adequado ao teu perfil atual. Verifica os motivos e explora outros apoios.",
+};
+
 export default async function Resultado({
   params,
 }: {
@@ -53,7 +98,9 @@ export default async function Resultado({
 
   let fundsQuery = supabase
     .from("funding_opportunities")
-    .select("*, eligibility_rules(*), funding_amounts(*), funding_documents_required(*), funding_zones(*)")
+    .select(
+      "*, eligibility_rules(*), funding_amounts(*), funding_documents_required(*), funding_zones(*)"
+    )
     .neq("publish_status", "rascunho");
   if (project.domain_id) {
     fundsQuery = fundsQuery.eq("domain_id", project.domain_id);
@@ -66,9 +113,11 @@ export default async function Resultado({
         (f.eligibility_rules || []) as Rule[],
         project
       );
-      const sim = simulateAmount((f.funding_amounts || []) as Amount[], project);
+      const sim = simulateAmount(
+        (f.funding_amounts || []) as Amount[],
+        project
+      );
       const zone = checkZone((f.funding_zones || []) as Zone[], project);
-      // Se a localização está fora da zona, rebaixa o veredito
       let finalVerdict = verdict;
       if (zone.status === "fora") finalVerdict = "inelegivel";
       return { fund: f, verdict: finalVerdict, results, sim, zone };
@@ -79,7 +128,6 @@ export default async function Resultado({
         b.sim.total - a.sim.total
     );
 
-  // Fundos "candidatáveis" = elegível ou com ressalvas
   const candidataveis = evaluated.filter(
     (e) => e.verdict === "elegivel" || e.verdict === "em_risco"
   );
@@ -90,12 +138,14 @@ export default async function Resultado({
     <main className="mx-auto max-w-3xl px-6 py-10">
       <NavBar />
       <div className="mt-3 flex items-center gap-2 text-sm text-ink/50">
-        <Link href="/perfil" className="hover:text-clay">Os meus diagnósticos</Link>
+        <Link href="/perfil" className="hover:text-clay">
+          Os meus diagnósticos
+        </Link>
         <span>/</span>
         <span className="text-ink/70">Resultado</span>
       </div>
 
-      <h1 className="mt-6 font-display text-3xl sm:text-4xl font-black text-soil">
+      <h1 className="mt-6 font-display text-3xl font-black text-soil sm:text-4xl">
         A tua primeira leitura
       </h1>
       <p className="mt-2 text-ink/70">
@@ -106,8 +156,10 @@ export default async function Resultado({
       {/* RESUMO GRÁTIS — sempre visível */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl bg-soil p-6 text-cream">
-          <div className="text-sm text-cream/70">Apoios a que te podes candidatar</div>
-          <div className="font-display text-4xl sm:text-5xl font-black text-wheat">
+          <div className="text-sm text-cream/70">
+            Apoios a que te podes candidatar
+          </div>
+          <div className="font-display text-4xl font-black text-wheat sm:text-5xl">
             {candidataveis.length}
           </div>
           <div className="mt-1 text-xs text-cream/60">
@@ -128,35 +180,47 @@ export default async function Resultado({
       {/* GATE: se não desbloqueado, mostra preview + paywall */}
       {!unlocked && candidataveis.length > 0 && (
         <div className="mt-8">
-          {/* Lista esbatida com os nomes tapados */}
           <div className="relative">
             <div className="space-y-3" aria-hidden>
-              {candidataveis.slice(0, 3).map(({ verdict, sim }, i) => (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-2xl border border-clay/20 bg-white/60 blur-sm select-none"
-                >
+              {candidataveis.slice(0, 3).map(({ verdict, sim }, i) => {
+                const s = SEMAPHORE[verdict] ?? SEMAPHORE.inelegivel;
+                return (
                   <div
-                    className="flex items-center justify-between px-5 py-3"
-                    style={{ backgroundColor: VERDICT_COLOR[verdict] + "22" }}
+                    key={i}
+                    className="overflow-hidden rounded-2xl border border-clay/20 bg-white/60 blur-sm select-none"
                   >
-                    <span className="text-sm font-bold" style={{ color: VERDICT_COLOR[verdict] }}>
-                      {VERDICT_LABEL[verdict]}
-                    </span>
-                    <span className="font-display text-lg font-black text-soil">
-                      ~{sim.total.toLocaleString("pt-PT")} €
-                    </span>
+                    <div
+                      className="flex items-center justify-between px-5 py-3"
+                      style={{
+                        backgroundColor: s.bg,
+                        borderBottom: `1px solid ${s.border}`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base leading-none" aria-hidden>
+                          {s.icon}
+                        </span>
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: s.color }}
+                        >
+                          {s.label}
+                        </span>
+                      </div>
+                      <span className="font-display text-lg font-black text-soil">
+                        ~{sim.total.toLocaleString("pt-PT")} €
+                      </span>
+                    </div>
+                    <div className="px-5 py-4">
+                      <div className="h-5 w-2/3 rounded bg-clay/20" />
+                      <div className="mt-2 h-3 w-full rounded bg-clay/10" />
+                      <div className="mt-1 h-3 w-4/5 rounded bg-clay/10" />
+                    </div>
                   </div>
-                  <div className="px-5 py-4">
-                    <div className="h-5 w-2/3 rounded bg-clay/20" />
-                    <div className="mt-2 h-3 w-full rounded bg-clay/10" />
-                    <div className="mt-1 h-3 w-4/5 rounded bg-clay/10" />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* Cartão de desbloqueio sobreposto */}
             <div className="mt-6 rounded-2xl border-2 border-wheat bg-cream p-7 text-center shadow-lg">
               <div className="font-display text-2xl font-black text-soil">
                 {candidataveis.length === 1
@@ -165,14 +229,16 @@ export default async function Resultado({
               </div>
               <p className="mx-auto mt-2 max-w-md text-ink/70">
                 Desbloqueia para veres quais são, as condições de cada um, o que
-                pode correr mal, os documentos necessários e o valor que podes
-                receber em cada apoio.
+                pode correr mal, os documentos necessários e o valor estimado.
               </p>
               <ul className="mx-auto mt-4 max-w-sm space-y-1 text-left text-sm text-ink/75">
                 <li>✓ Nome e descrição de cada apoio</li>
-                <li>✓ Condições verificadas contra o teu perfil</li>
+                <li>✓ Semáforo de decisão (compatível / ressalvas / inelegível)</li>
+                <li>✓ O que confirmar antes de avançar</li>
                 <li>✓ Valor estimado por apoio</li>
                 <li>✓ Checklist de documentos necessários</li>
+                <li>✓ Riscos e condições escondidas</li>
+                <li>✓ Próximo passo recomendado por apoio</li>
                 <li>✓ Links e PDF do aviso oficial</li>
               </ul>
               <div className="mt-6">
@@ -198,8 +264,8 @@ export default async function Resultado({
           </h2>
           <p className="mt-2 text-ink/70">
             Com as respostas atuais, nenhum apoio surge como diretamente
-            elegível. Podes explorar outros apoios disponíveis ou tentar
-            outro diagnóstico com informação mais detalhada.
+            elegível. Podes explorar outros apoios disponíveis ou tentar outro
+            diagnóstico com informação mais detalhada.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link href="/apoios" className="btn-primary">
@@ -227,7 +293,11 @@ export default async function Resultado({
           {/* Priorização: por onde começar */}
           {(() => {
             const ranked = prioritize(
-              evaluated.map((e) => ({ fund: e.fund, verdict: e.verdict, sim: e.sim }))
+              evaluated.map((e) => ({
+                fund: e.fund,
+                verdict: e.verdict,
+                sim: e.sim,
+              }))
             );
             if (ranked.length === 0) return null;
             return (
@@ -275,7 +345,11 @@ export default async function Resultado({
           {/* Comparador (premium) */}
           {(() => {
             const rows = buildComparison(
-              evaluated.map((e) => ({ fund: e.fund, verdict: e.verdict, sim: e.sim }))
+              evaluated.map((e) => ({
+                fund: e.fund,
+                verdict: e.verdict,
+                sim: e.sim,
+              }))
             );
             if (rows.length < 2) return null;
             return <FundComparator rows={rows} />;
@@ -300,7 +374,7 @@ export default async function Resultado({
             );
           })()}
 
-          {/* Guias de candidatura (premium) — para os candidatáveis */}
+          {/* Guias de candidatura (premium) */}
           {(() => {
             const guias = evaluated.filter(
               (e) =>
@@ -325,7 +399,10 @@ export default async function Resultado({
                       closes_at: e.fund.closes_at,
                       documents: (e.fund.funding_documents_required || [])
                         .slice()
-                        .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                        .sort(
+                          (a: any, b: any) =>
+                            (a.sort_order ?? 0) - (b.sort_order ?? 0)
+                        )
                         .map((d: any) => ({
                           id: d.id,
                           name: d.name,
@@ -338,142 +415,304 @@ export default async function Resultado({
               </div>
             );
           })()}
-          {evaluated.map(({ fund, verdict, results, sim, zone }) => (
-            <div
-              key={fund.id}
-              className="overflow-hidden rounded-2xl border border-clay/20 bg-white/60"
-            >
+
+          {/* Detalhe por fundo — com semáforo de decisão */}
+          {evaluated.map(({ fund, verdict, results, sim, zone }) => {
+            const s = SEMAPHORE[verdict] ?? SEMAPHORE.inelegivel;
+            const cumpre = (results as any[]).filter(
+              (r) => r.outcome === "cumpre"
+            );
+            const aConfirmar = (results as any[]).filter(
+              (r) =>
+                r.outcome === "desconhecido" ||
+                (r.outcome === "falha" && r.severity === "aviso")
+            );
+            const bloqueadores = (results as any[]).filter(
+              (r) => r.outcome === "falha" && r.severity === "eliminatoria"
+            );
+            return (
               <div
-                className="flex items-center justify-between px-5 py-3"
-                style={{ backgroundColor: VERDICT_COLOR[verdict] + "22" }}
+                key={fund.id}
+                className="overflow-hidden rounded-2xl border border-clay/20 bg-white/60"
               >
-                <span className="text-sm font-bold" style={{ color: VERDICT_COLOR[verdict] }}>
-                  {VERDICT_LABEL[verdict]}
-                </span>
-                {sim.total > 0 && verdict !== "inelegivel" && (
-                  <span className="font-display text-lg font-black text-soil">
-                    ~{sim.total.toLocaleString("pt-PT")} €
-                  </span>
-                )}
-              </div>
-
-              <div className="px-5 py-4">
-                <h2 className="font-display text-xl font-bold text-soil">
-                  {fund.name}
-                </h2>
-                <p className="text-sm text-ink/60">
-                  {fund.program} · {fund.entity}
-                </p>
-                {fund.summary && (
-                  <p className="mt-2 text-sm text-ink/80">{fund.summary}</p>
-                )}
-
-                {(fund.source_url || fund.pdf_url || fund.platform_url || fund.info_url) && (
-                  <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                    {fund.source_url && (
-                      <a href={fund.source_url} target="_blank" rel="noreferrer" className="text-clay underline">
-                        Página oficial ↗
-                      </a>
-                    )}
-                    {fund.platform_url && (
-                      <a href={fund.platform_url} target="_blank" rel="noreferrer" className="text-clay underline">
-                        Candidatar ↗
-                      </a>
-                    )}
-                    {fund.info_url && (
-                      <a href={fund.info_url} target="_blank" rel="noreferrer" className="text-clay underline">
-                        Mais informação ↗
-                      </a>
-                    )}
-                    {fund.pdf_url && (
-                      <a href={fund.pdf_url} target="_blank" rel="noreferrer" className="text-clay underline">
-                        PDF do aviso ↗
-                      </a>
-                    )}
+                {/* Cabeçalho semáforo */}
+                <div
+                  className="flex items-center justify-between px-5 py-3"
+                  style={{
+                    backgroundColor: s.bg,
+                    borderBottom: `1px solid ${s.border}`,
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg leading-none" aria-hidden>
+                      {s.icon}
+                    </span>
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: s.color }}
+                    >
+                      {s.label}
+                    </span>
                   </div>
-                )}
+                  {sim.total > 0 && verdict !== "inelegivel" && (
+                    <span className="font-display text-lg font-black text-soil">
+                      ~{sim.total.toLocaleString("pt-PT")} €
+                    </span>
+                  )}
+                </div>
 
-                {zone && zone.status !== "sem_info" && (
-                  <p className="mt-2 text-sm">
-                    {zone.status === "ok" && (
-                      <span className="text-olive">📍 Estás dentro da zona elegível{zone.label ? ` (${zone.label})` : ""}.</span>
-                    )}
-                    {zone.status === "nacional" && (
-                      <span className="text-olive">📍 Apoio de âmbito nacional (continente).</span>
-                    )}
-                    {zone.status === "fora" && (
-                      <span className="text-[#9b3b2f]">📍 A tua zona parece estar fora da área deste apoio{zone.label ? ` (${zone.label})` : ""}.</span>
-                    )}
+                <div className="px-5 py-4">
+                  <h2 className="font-display text-xl font-bold text-soil">
+                    {fund.name}
+                  </h2>
+                  <p className="text-sm text-ink/60">
+                    {[fund.program, fund.entity].filter(Boolean).join(" · ")}
                   </p>
-                )}
+                  {fund.summary && (
+                    <p className="mt-2 text-sm text-ink/80">{fund.summary}</p>
+                  )}
 
-                <ul className="mt-4 space-y-2">
-                  {results.map((r, i) => (
-                    <li key={i} className="flex gap-2 text-sm">
-                      <span aria-hidden>
-                        {r.outcome === "cumpre"
-                          ? "✅"
-                          : r.outcome === "falha"
-                          ? r.severity === "eliminatoria"
-                            ? "⛔"
-                            : "⚠️"
-                          : "❓"}
-                      </span>
-                      <span>
-                        <span className="font-semibold text-soil">{r.label}:</span>{" "}
-                        <span className="text-ink/75">{r.explanation}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                  {/* Links oficiais */}
+                  {(fund.source_url ||
+                    fund.pdf_url ||
+                    fund.platform_url ||
+                    fund.info_url) && (
+                    <div className="mt-2 flex flex-wrap gap-3 text-sm">
+                      {fund.source_url && (
+                        <a
+                          href={fund.source_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-clay underline"
+                        >
+                          Página oficial ↗
+                        </a>
+                      )}
+                      {fund.platform_url && (
+                        <a
+                          href={fund.platform_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-clay underline"
+                        >
+                          Candidatar ↗
+                        </a>
+                      )}
+                      {fund.info_url && (
+                        <a
+                          href={fund.info_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-clay underline"
+                        >
+                          Mais informação ↗
+                        </a>
+                      )}
+                      {fund.pdf_url && (
+                        <a
+                          href={fund.pdf_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-clay underline"
+                        >
+                          PDF do aviso ↗
+                        </a>
+                      )}
+                    </div>
+                  )}
 
-                {verdict !== "inelegivel" &&
-                  fund.funding_documents_required &&
-                  fund.funding_documents_required.length > 0 && (
-                    <div className="mt-5 rounded-lg bg-cream/70 p-4">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-clay">
-                        Documentos que vais precisar
+                  {/* Zona geográfica */}
+                  {zone && zone.status !== "sem_info" && (
+                    <p className="mt-2 text-sm">
+                      {zone.status === "ok" && (
+                        <span className="text-olive">
+                          📍 Estás dentro da zona elegível
+                          {zone.label ? ` (${zone.label})` : ""}.
+                        </span>
+                      )}
+                      {zone.status === "nacional" && (
+                        <span className="text-olive">
+                          📍 Apoio de âmbito nacional (continente).
+                        </span>
+                      )}
+                      {zone.status === "fora" && (
+                        <span className="text-[#9b3b2f]">
+                          📍 A tua zona parece estar fora da área deste apoio
+                          {zone.label ? ` (${zone.label})` : ""}.
+                        </span>
+                      )}
+                    </p>
+                  )}
+
+                  {/* Bloqueadores — motivos de inelegibilidade */}
+                  {bloqueadores.length > 0 && (
+                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-red-700">
+                        Porque não és elegível
                       </div>
-                      <ul className="mt-2 space-y-1.5">
-                        {fund.funding_documents_required
-                          .sort(
-                            (a: any, b: any) =>
-                              (a.sort_order ?? 0) - (b.sort_order ?? 0)
-                          )
-                          .map((d: any) => (
-                            <li key={d.id} className="text-sm">
-                              <span className="text-soil">▢</span>{" "}
-                              <span className="font-medium text-soil">
-                                {d.name}
+                      <ul className="mt-2 space-y-1">
+                        {bloqueadores.map((r: any, i: number) => (
+                          <li key={i} className="flex gap-2 text-sm">
+                            <span aria-hidden>⛔</span>
+                            <span>
+                              <span className="font-semibold text-red-800">
+                                {r.label}:
+                              </span>{" "}
+                              <span className="text-red-700">
+                                {r.explanation}
                               </span>
-                              {d.hint && (
-                                <span className="block pl-5 text-xs text-ink/55">
-                                  {d.hint}
-                                </span>
-                              )}
-                              {d.how_to_get && (
-                                <span className="block pl-5 text-xs text-olive">
-                                  Como obter: {d.how_to_get}
-                                </span>
-                              )}
-                              {d.official_url && (
-                                <a
-                                  href={d.official_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="ml-5 text-xs text-clay underline"
-                                >
-                                  Abrir portal oficial ↗
-                                </a>
-                              )}
-                            </li>
-                          ))}
+                            </span>
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   )}
+
+                  {/* O que confirmar antes de avançar */}
+                  {aConfirmar.length > 0 && verdict !== "inelegivel" && (
+                    <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                        O que confirmar antes de avançar
+                      </div>
+                      <ul className="mt-2 space-y-1">
+                        {aConfirmar.map((r: any, i: number) => (
+                          <li key={i} className="flex gap-2 text-sm">
+                            <span aria-hidden>
+                              {r.outcome === "desconhecido" ? "❓" : "⚠️"}
+                            </span>
+                            <span>
+                              <span className="font-semibold text-amber-800">
+                                {r.label}:
+                              </span>{" "}
+                              <span className="text-amber-700">
+                                {r.explanation}
+                              </span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Riscos e condições escondidas */}
+                  {(fund.hidden_conditions ||
+                    fund.risks ||
+                    fund.incompatibilities) && (
+                    <div className="mt-4 rounded-lg border border-wheat/50 bg-wheat/10 p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-clay">
+                        Pontos de atenção
+                      </div>
+                      {fund.hidden_conditions && (
+                        <p className="mt-1 text-sm leading-relaxed text-ink/80">
+                          <strong>Condições escondidas:</strong>{" "}
+                          {fund.hidden_conditions}
+                        </p>
+                      )}
+                      {fund.risks && (
+                        <p className="mt-1 text-sm leading-relaxed text-ink/80">
+                          <strong>Riscos:</strong> {fund.risks}
+                        </p>
+                      )}
+                      {fund.incompatibilities && (
+                        <p className="mt-1 text-sm leading-relaxed text-ink/80">
+                          <strong>Não acumulável com:</strong>{" "}
+                          {fund.incompatibilities}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Condições que cumpres */}
+                  {cumpre.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-olive">
+                        Condições que cumpres ({cumpre.length})
+                      </div>
+                      <ul className="mt-1 space-y-1">
+                        {cumpre.map((r: any, i: number) => (
+                          <li
+                            key={i}
+                            className="flex gap-2 text-sm text-ink/70"
+                          >
+                            <span aria-hidden>✅</span>
+                            <span>
+                              <span className="font-semibold">{r.label}:</span>{" "}
+                              {r.explanation}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Documentos necessários */}
+                  {verdict !== "inelegivel" &&
+                    fund.funding_documents_required &&
+                    fund.funding_documents_required.length > 0 && (
+                      <div className="mt-5 rounded-lg bg-cream/70 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-clay">
+                          Documentos que vais precisar
+                        </div>
+                        <ul className="mt-2 space-y-1.5">
+                          {fund.funding_documents_required
+                            .sort(
+                              (a: any, b: any) =>
+                                (a.sort_order ?? 0) - (b.sort_order ?? 0)
+                            )
+                            .map((d: any) => (
+                              <li key={d.id} className="text-sm">
+                                <span className="text-soil">▢</span>{" "}
+                                <span className="font-medium text-soil">
+                                  {d.name}
+                                </span>
+                                {d.hint && (
+                                  <span className="block pl-5 text-xs text-ink/55">
+                                    {d.hint}
+                                  </span>
+                                )}
+                                {d.how_to_get && (
+                                  <span className="block pl-5 text-xs text-olive">
+                                    Como obter: {d.how_to_get}
+                                  </span>
+                                )}
+                                {d.official_url && (
+                                  <a
+                                    href={d.official_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="ml-5 text-xs text-clay underline"
+                                  >
+                                    Abrir portal oficial ↗
+                                  </a>
+                                )}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {/* Próximo passo */}
+                  <div
+                    className="mt-4 rounded-lg border-l-4 p-3"
+                    style={{
+                      borderLeftColor: s.color,
+                      backgroundColor: s.bg,
+                    }}
+                  >
+                    <div
+                      className="text-xs font-semibold uppercase tracking-wide"
+                      style={{ color: s.color }}
+                    >
+                      Próximo passo
+                    </div>
+                    <p className="mt-1 text-sm" style={{ color: s.color }}>
+                      {NEXT_STEP[verdict]}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <div className="rounded-2xl border border-clay/20 bg-cream/60 p-6 text-center">
             <h2 className="font-display text-xl font-black text-soil">

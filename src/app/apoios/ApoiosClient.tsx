@@ -31,6 +31,18 @@ const STATUS_LABEL: Record<string, string> = {
   recorrente: "Recorrente",
 };
 
+const COMPLEXITY_LABEL: Record<string, string> = {
+  baixa: "Processo simples",
+  media: "Complexidade média",
+  alta: "Processo exigente",
+};
+
+const COMPLEXITY_COLOR: Record<string, string> = {
+  baixa: "bg-mint/20 text-olive",
+  media: "bg-wheat/20 text-clay",
+  alta: "bg-clay/15 text-clay",
+};
+
 const STATUS_COLOR: Record<string, string> = {
   aberto: "bg-olive/15 text-olive",
   fechado: "bg-clay/15 text-clay",
@@ -61,6 +73,7 @@ export default function ApoiosClient({
   const [search, setSearch] = useState("");
   const [filterDomain, setFilterDomain] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterComplexity, setFilterComplexity] = useState("");
 
   const domainMap = useMemo(
     () => Object.fromEntries(domains.map((d) => [d.id, d])),
@@ -72,6 +85,7 @@ export default function ApoiosClient({
     return funds.filter((f) => {
       if (filterDomain && f.domain_id !== filterDomain) return false;
       if (filterStatus && (f.status || "previsto") !== filterStatus) return false;
+      if (filterComplexity && (f.complexity || "media") !== filterComplexity) return false;
       if (q) {
         const haystack = [f.name, f.entity, f.program, f.summary, f.beneficiaries]
           .join(" ")
@@ -80,7 +94,7 @@ export default function ApoiosClient({
       }
       return true;
     });
-  }, [funds, filterDomain, filterStatus, search]);
+  }, [funds, filterDomain, filterStatus, filterComplexity, search]);
 
   return (
     <>
@@ -116,6 +130,18 @@ export default function ApoiosClient({
             </option>
           ))}
         </select>
+        <select
+          className="field-input"
+          value={filterComplexity}
+          onChange={(e) => setFilterComplexity(e.target.value)}
+        >
+          <option value="">Toda a dificuldade</option>
+          {Object.entries(COMPLEXITY_LABEL).map(([v, l]) => (
+            <option key={v} value={v}>
+              {l}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Contagem */}
@@ -145,6 +171,15 @@ export default function ApoiosClient({
                     {domain && (
                       <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs text-ink/60">
                         {domain.icon} {domain.label}
+                      </span>
+                    )}
+                    {f.complexity && (
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          COMPLEXITY_COLOR[f.complexity] ?? "bg-clay/10 text-ink/60"
+                        }`}
+                      >
+                        {COMPLEXITY_LABEL[f.complexity] ?? f.complexity}
                       </span>
                     )}
                   </div>
