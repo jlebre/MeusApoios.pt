@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase";
 import NavBar from "@/components/NavBar";
+import FavoriteButton from "@/components/FavoriteButton";
 import {
   evaluateFund,
   simulateAmount,
@@ -454,11 +455,14 @@ export default async function Resultado({
                       {s.label}
                     </span>
                   </div>
-                  {sim.total > 0 && verdict !== "inelegivel" && (
-                    <span className="font-display text-lg font-black text-soil">
-                      ~{sim.total.toLocaleString("pt-PT")} €
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {sim.total > 0 && verdict !== "inelegivel" && (
+                      <span className="font-display text-lg font-black text-soil">
+                        ~{sim.total.toLocaleString("pt-PT")} €
+                      </span>
+                    )}
+                    <FavoriteButton fundId={fund.id} fundName={fund.name} />
+                  </div>
                 </div>
 
                 <div className="px-5 py-4">

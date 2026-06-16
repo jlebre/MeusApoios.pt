@@ -1,27 +1,21 @@
 import { createServiceClient } from "@/lib/supabase";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
+import FavoriteButton from "@/components/FavoriteButton";
 import { notFound } from "next/navigation";
 import ApoiosClient from "../ApoiosClient";
+import {
+  getFundStatus,
+  getFundDeadlineMessage,
+  daysUntil,
+  FUND_STATUS_LABEL,
+  FUND_STATUS_COLOR,
+} from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const STATUS_LABEL: Record<string, string> = {
-  aberto: "Aberto",
-  fechado: "Fechado",
-  previsto: "Previsto",
-  recorrente: "Recorrente",
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  aberto: "bg-olive/15 text-olive",
-  fechado: "bg-clay/15 text-clay",
-  previsto: "bg-sky/15 text-sky",
-  recorrente: "bg-mint/20 text-olive",
-};
 
 const COMPLEXITY_LABEL: Record<string, string> = {
   baixa: "Processo simples",
@@ -142,8 +136,10 @@ export default async function ApoioRoute({
   if (!fund) notFound();
 
   const domain = (fund as any).domains;
-  const status = fund.status || "previsto";
-  const statusColor = STATUS_COLOR[status] ?? "bg-clay/10 text-ink/60";
+  const status = getFundStatus(fund as any);
+  const statusColor = FUND_STATUS_COLOR[status] ?? "bg-clay/10 text-ink/60";
+  const deadlineMsg = getFundDeadlineMessage(fund as any, status);
+  const daysLeft = fund.closes_at && status === "aberto" ? daysUntil(fund.closes_at) : null;
 
   const docs = ((fund as any).funding_documents_required || [])
     .slice()
@@ -171,7 +167,7 @@ export default async function ApoioRoute({
           <span
             className={`rounded-full px-3 py-1 text-sm font-semibold ${statusColor}`}
           >
-            {STATUS_LABEL[status] ?? "Desconhecido"}
+            {FUND_STATUS_LABEL[status] ?? "Desconhecido"}
           </span>
           {domain && (
             <span className="rounded-full bg-cream px-3 py-1 text-sm text-ink/60">
@@ -183,13 +179,38 @@ export default async function ApoioRoute({
               {COMPLEXITY_LABEL[fund.complexity] ?? fund.complexity}
             </span>
           )}
+          {daysLeft !== null && daysLeft >= 0 && daysLeft <= 30 && (
+            <span
+              className={`rounded-full px-3 py-1 text-sm font-bold ${
+                daysLeft <= 7 ? "bg-red-100 text-red-700" : "bg-wheat/30 text-clay"
+              }`}
+            >
+              {daysLeft === 0 ? "Hoje!" : daysLeft === 1 ? "Amanhã" : `${daysLeft} dias`}
+            </span>
+          )}
         </div>
-        <h1 className="mt-4 font-display text-3xl font-black text-soil sm:text-4xl">
-          {fund.name}
-        </h1>
+        <div className="mt-4 flex items-start gap-3">
+          <h1 className="flex-1 font-display text-3xl font-black text-soil sm:text-4xl">
+            {fund.name}
+          </h1>
+          <FavoriteButton fundId={fund.id} fundName={fund.name} size="md" />
+        </div>
         {(fund.program || fund.entity) && (
           <p className="mt-1 text-ink/60">
             {[fund.program, fund.entity].filter(Boolean).join(" · ")}
+          </p>
+        )}
+        {deadlineMsg && (
+          <p
+            className={`mt-2 text-sm font-medium ${
+              daysLeft !== null && daysLeft <= 7
+                ? "text-red-600"
+                : daysLeft !== null && daysLeft <= 30
+                ? "text-clay"
+                : "text-ink/55"
+            }`}
+          >
+            {deadlineMsg}
           </p>
         )}
       </div>

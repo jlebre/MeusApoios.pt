@@ -2,6 +2,15 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import {
+  getFundStatus,
+  getFundDeadlineMessage,
+  daysUntil,
+  FUND_STATUS_LABEL,
+  FUND_STATUS_COLOR,
+  type FundStatus,
+} from "@/lib/utils";
+import FavoriteButton from "@/components/FavoriteButton";
 
 type Fund = {
   id: string;
@@ -25,20 +34,6 @@ type Domain = {
   icon: string | null;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  aberto: "Aberto",
-  fechado: "Fechado",
-  previsto: "Previsto",
-  recorrente: "Recorrente",
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  aberto: "bg-olive/15 text-olive",
-  fechado: "bg-clay/15 text-clay",
-  previsto: "bg-sky/15 text-sky",
-  recorrente: "bg-mint/20 text-olive",
-};
-
 const COMPLEXITY_LABEL: Record<string, string> = {
   baixa: "Processo simples",
   media: "Complexidade média",
@@ -50,19 +45,6 @@ const COMPLEXITY_COLOR: Record<string, string> = {
   media: "bg-wheat/20 text-clay",
   alta: "bg-clay/15 text-clay",
 };
-
-function statusBadge(status: string | null) {
-  const s = status || "previsto";
-  return (
-    <span
-      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-        STATUS_COLOR[s] ?? "bg-clay/10 text-ink/60"
-      }`}
-    >
-      {STATUS_LABEL[s] ?? "Desconhecido"}
-    </span>
-  );
-}
 
 export default function ApoiosClient({
   funds,
@@ -84,11 +66,20 @@ export default function ApoiosClient({
     [domains]
   );
 
+  // Enrich each fund with computed status once
+  const enriched = useMemo(() => {
+    const now = new Date();
+    return funds.map((f) => ({
+      ...f,
+      _computedStatus: getFundStatus(f, now) as FundStatus,
+    }));
+  }, [funds]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return funds.filter((f) => {
+    return enriched.filter((f) => {
       if (filterDomain && f.domain_id !== filterDomain) return false;
-      if (filterStatus && (f.status || "previsto") !== filterStatus) return false;
+      if (filterStatus && f._computedStatus !== filterStatus) return false;
       if (filterComplexity && (f.complexity || "media") !== filterComplexity)
         return false;
       if (filterScope && f._scope !== filterScope) return false;
@@ -100,9 +91,11 @@ export default function ApoiosClient({
       }
       return true;
     });
-  }, [funds, filterDomain, filterStatus, filterComplexity, filterScope, search]);
+  }, [enriched, filterDomain, filterStatus, filterComplexity, filterScope, search]);
 
   const showScopeFilter = funds.some((f) => f._scope && f._scope !== "desconhecido");
+
+  const statusOptions: FundStatus[] = ["aberto", "previsto", "recorrente", "fechado", "desconhecido"];
 
   return (
     <>
@@ -134,9 +127,9 @@ export default function ApoiosClient({
           onChange={(e) => setFilterStatus(e.target.value)}
         >
           <option value="">Todos os estados</option>
-          {Object.entries(STATUS_LABEL).map(([v, l]) => (
+          {statusOptions.map((v) => (
             <option key={v} value={v}>
-              {l}
+              {FUND_STATUS_LABEL[v]}
             </option>
           ))}
         </select>
@@ -182,15 +175,27 @@ export default function ApoiosClient({
         )}
         {filtered.map((f) => {
           const domain = f.domain_id ? domainMap[f.domain_id] : null;
+          const deadline = getFundDeadlineMessage(f, f._computedStatus);
+          const days =
+            f.closes_at && f._computedStatus === "aberto"
+              ? daysUntil(f.closes_at)
+              : null;
+
           return (
             <div
               key={f.id}
               className="rounded-2xl border border-clay/20 bg-white/60 p-5 transition hover:border-clay/40"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    {statusBadge(f.status)}
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        FUND_STATUS_COLOR[f._computedStatus]
+                      }`}
+                    >
+                      {FUND_STATUS_LABEL[f._computedStatus]}
+                    </span>
                     {domain && (
                       <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs text-ink/60">
                         {domain.icon} {domain.label}
@@ -216,6 +221,17 @@ export default function ApoiosClient({
                         {f._scope === "nacional" ? "🌍 Nacional" : "📍 Regional"}
                       </span>
                     )}
+                    {days !== null && days >= 0 && days <= 30 && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          days <= 7
+                            ? "bg-red-100 text-red-700"
+                            : "bg-wheat/30 text-clay"
+                        }`}
+                      >
+                        {days === 0 ? "Hoje!" : days === 1 ? "Amanhã" : `${days} dias`}
+                      </span>
+                    )}
                   </div>
                   <h2 className="mt-2 font-display text-lg font-bold text-soil">
                     {f.name}
@@ -235,19 +251,23 @@ export default function ApoiosClient({
                       Para: {f.beneficiaries}
                     </p>
                   )}
-                  {f.closes_at && (
-                    <p className="mt-1 text-xs text-clay">
-                      Prazo:{" "}
-                      {new Date(f.closes_at).toLocaleDateString("pt-PT", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
+                  {deadline && (
+                    <p
+                      className={`mt-1 text-xs font-medium ${
+                        days !== null && days <= 7
+                          ? "text-red-600"
+                          : days !== null && days <= 30
+                          ? "text-clay"
+                          : "text-ink/50"
+                      }`}
+                    >
+                      {deadline}
                     </p>
                   )}
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-2">
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <FavoriteButton fundId={f.id} fundName={f.name} />
                   <Link
                     href={`/apoios/${f.id}`}
                     className="btn-ghost whitespace-nowrap text-sm"

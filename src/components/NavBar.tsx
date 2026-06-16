@@ -20,8 +20,20 @@ export default function NavBar() {
           Apoios
         </Link>
         <Link
-          href="/areas"
+          href="/calendario"
           className="hidden sm:block rounded-md px-3 py-1.5 text-sm font-medium text-ink/70 hover:bg-clay/10 hover:text-soil"
+        >
+          Calendário
+        </Link>
+        <Link
+          href="/favoritos"
+          className="hidden sm:block rounded-md px-3 py-1.5 text-sm font-medium text-ink/70 hover:bg-clay/10 hover:text-soil"
+        >
+          Favoritos
+        </Link>
+        <Link
+          href="/areas"
+          className="hidden sm:block btn-primary text-sm"
         >
           Diagnóstico
         </Link>
