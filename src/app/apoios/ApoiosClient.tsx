@@ -15,6 +15,7 @@ type Fund = {
   closes_at: string | null;
   opens_at: string | null;
   domain_id: string | null;
+  _scope?: string | null;
 };
 
 type Domain = {
@@ -31,6 +32,13 @@ const STATUS_LABEL: Record<string, string> = {
   recorrente: "Recorrente",
 };
 
+const STATUS_COLOR: Record<string, string> = {
+  aberto: "bg-olive/15 text-olive",
+  fechado: "bg-clay/15 text-clay",
+  previsto: "bg-sky/15 text-sky",
+  recorrente: "bg-mint/20 text-olive",
+};
+
 const COMPLEXITY_LABEL: Record<string, string> = {
   baixa: "Processo simples",
   media: "Complexidade média",
@@ -41,13 +49,6 @@ const COMPLEXITY_COLOR: Record<string, string> = {
   baixa: "bg-mint/20 text-olive",
   media: "bg-wheat/20 text-clay",
   alta: "bg-clay/15 text-clay",
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  aberto: "bg-olive/15 text-olive",
-  fechado: "bg-clay/15 text-clay",
-  previsto: "bg-sky/15 text-sky",
-  recorrente: "bg-mint/20 text-olive",
 };
 
 function statusBadge(status: string | null) {
@@ -66,14 +67,17 @@ function statusBadge(status: string | null) {
 export default function ApoiosClient({
   funds,
   domains,
+  defaultDomain = "",
 }: {
   funds: Fund[];
   domains: Domain[];
+  defaultDomain?: string;
 }) {
   const [search, setSearch] = useState("");
-  const [filterDomain, setFilterDomain] = useState("");
+  const [filterDomain, setFilterDomain] = useState(defaultDomain);
   const [filterStatus, setFilterStatus] = useState("");
   const [filterComplexity, setFilterComplexity] = useState("");
+  const [filterScope, setFilterScope] = useState("");
 
   const domainMap = useMemo(
     () => Object.fromEntries(domains.map((d) => [d.id, d])),
@@ -85,7 +89,9 @@ export default function ApoiosClient({
     return funds.filter((f) => {
       if (filterDomain && f.domain_id !== filterDomain) return false;
       if (filterStatus && (f.status || "previsto") !== filterStatus) return false;
-      if (filterComplexity && (f.complexity || "media") !== filterComplexity) return false;
+      if (filterComplexity && (f.complexity || "media") !== filterComplexity)
+        return false;
+      if (filterScope && f._scope !== filterScope) return false;
       if (q) {
         const haystack = [f.name, f.entity, f.program, f.summary, f.beneficiaries]
           .join(" ")
@@ -94,7 +100,9 @@ export default function ApoiosClient({
       }
       return true;
     });
-  }, [funds, filterDomain, filterStatus, filterComplexity, search]);
+  }, [funds, filterDomain, filterStatus, filterComplexity, filterScope, search]);
+
+  const showScopeFilter = funds.some((f) => f._scope && f._scope !== "desconhecido");
 
   return (
     <>
@@ -106,18 +114,20 @@ export default function ApoiosClient({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select
-          className="field-input"
-          value={filterDomain}
-          onChange={(e) => setFilterDomain(e.target.value)}
-        >
-          <option value="">Todas as áreas</option>
-          {domains.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.icon} {d.label}
-            </option>
-          ))}
-        </select>
+        {domains.length > 1 && (
+          <select
+            className="field-input"
+            value={filterDomain}
+            onChange={(e) => setFilterDomain(e.target.value)}
+          >
+            <option value="">Todas as áreas</option>
+            {domains.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.icon} {d.label}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           className="field-input"
           value={filterStatus}
@@ -142,12 +152,25 @@ export default function ApoiosClient({
             </option>
           ))}
         </select>
+        {showScopeFilter && (
+          <select
+            className="field-input"
+            value={filterScope}
+            onChange={(e) => setFilterScope(e.target.value)}
+          >
+            <option value="">Qualquer âmbito</option>
+            <option value="nacional">🌍 Nacional</option>
+            <option value="restrito">📍 Zona restrita</option>
+          </select>
+        )}
       </div>
 
       {/* Contagem */}
       <p className="mt-4 text-sm text-ink/50">
         {filtered.length} apoio{filtered.length !== 1 ? "s" : ""}
-        {search || filterDomain || filterStatus ? " encontrado" + (filtered.length !== 1 ? "s" : "") : " no catálogo"}
+        {search || filterDomain || filterStatus || filterComplexity || filterScope
+          ? " encontrado" + (filtered.length !== 1 ? "s" : "")
+          : " no catálogo"}
       </p>
 
       {/* Lista */}
@@ -182,6 +205,17 @@ export default function ApoiosClient({
                         {COMPLEXITY_LABEL[f.complexity] ?? f.complexity}
                       </span>
                     )}
+                    {f._scope && f._scope !== "desconhecido" && (
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          f._scope === "nacional"
+                            ? "bg-sky/15 text-sky"
+                            : "bg-cream text-ink/60"
+                        }`}
+                      >
+                        {f._scope === "nacional" ? "🌍 Nacional" : "📍 Regional"}
+                      </span>
+                    )}
                   </div>
                   <h2 className="mt-2 font-display text-lg font-bold text-soil">
                     {f.name}
@@ -192,7 +226,7 @@ export default function ApoiosClient({
                     </p>
                   )}
                   {f.summary && (
-                    <p className="mt-2 text-sm text-ink/75 line-clamp-2">
+                    <p className="mt-2 line-clamp-2 text-sm text-ink/75">
                       {f.summary}
                     </p>
                   )}
@@ -216,14 +250,14 @@ export default function ApoiosClient({
                 <div className="flex shrink-0 flex-col gap-2">
                   <Link
                     href={`/apoios/${f.id}`}
-                    className="btn-ghost text-sm whitespace-nowrap"
+                    className="btn-ghost whitespace-nowrap text-sm"
                   >
                     Ver detalhes
                   </Link>
                   {domain && (
                     <Link
                       href={`/diagnostico?dominio=${domain.slug}`}
-                      className="btn-primary text-sm whitespace-nowrap"
+                      className="btn-primary whitespace-nowrap text-sm"
                     >
                       Ver se me aplica
                     </Link>

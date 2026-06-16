@@ -11,11 +11,21 @@ export default async function Apoios() {
   const [{ data: funds }, { data: domains }] = await Promise.all([
     supabase
       .from("funding_opportunities")
-      .select("id, name, program, entity, summary, beneficiaries, status, complexity, closes_at, opens_at, domain_id")
+      .select(
+        "id, name, program, entity, summary, beneficiaries, status, complexity, closes_at, opens_at, domain_id, funding_zones(zone_type)"
+      )
       .neq("publish_status", "rascunho")
       .order("name"),
     supabase.from("domains").select("id, slug, label, icon").order("sort_order"),
   ]);
+
+  const fundsWithScope = (funds ?? []).map((f: any) => {
+    const zones = f.funding_zones || [];
+    const isNacional = zones.some((z: any) => z.zone_type === "nacional");
+    const scope =
+      isNacional ? "nacional" : zones.length > 0 ? "restrito" : "desconhecido";
+    return { ...f, _scope: scope };
+  });
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -37,7 +47,7 @@ export default async function Apoios() {
       </div>
 
       <ApoiosClient
-        funds={funds ?? []}
+        funds={fundsWithScope}
         domains={domains ?? []}
       />
     </main>

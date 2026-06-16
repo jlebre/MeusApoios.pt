@@ -26,6 +26,30 @@ const TRANSVERSAIS: FieldDef[] = [
   { field: "location_district", label: "Distrito", type: "text" },
   { field: "location_municipality", label: "Concelho", type: "text" },
   { field: "annual_income_eur", label: "Rendimento anual (€)", type: "number" },
+  { field: "household_size", label: "Pessoas no agregado familiar", type: "number" },
+];
+
+const YESNO_FIELDS: { field: string; label: string; hint: string }[] = [
+  {
+    field: "tax_situation_ok",
+    label: "Situação fiscal regularizada",
+    hint: "Declarações de IRS entregues, sem dívidas à AT.",
+  },
+  {
+    field: "ss_situation_ok",
+    label: "Segurança Social regularizada",
+    hint: "Sem dívidas à Segurança Social.",
+  },
+  {
+    field: "activity_open",
+    label: "Tenho atividade profissional aberta",
+    hint: "NIFAP, NIF de atividade independente, ou empresa com atividade.",
+  },
+  {
+    field: "has_empresa",
+    label: "Tenho empresa constituída",
+    hint: "Pessoa coletiva registada no registo comercial.",
+  },
 ];
 
 export default function Perfil() {
@@ -99,12 +123,25 @@ export default function Perfil() {
       if (age !== null) patch.promoter_age = age;
     }
 
+    // Campos yesno base (tax_situation_ok existe desde schema_v6)
     patch.tax_situation_ok = profile.tax_situation_ok ?? null;
 
+    // Guardar campos base
     await supabase
       .from("shared_profiles")
       .update(patch)
       .eq("user_id", session.user.id);
+
+    // Campos adicionais (schema_v13) — ignorar erro se colunas ainda não existirem
+    await supabase
+      .from("shared_profiles")
+      .update({
+        ss_situation_ok: profile.ss_situation_ok ?? null,
+        activity_open: profile.activity_open ?? null,
+        has_empresa: profile.has_empresa ?? null,
+      })
+      .eq("user_id", session.user.id);
+
     setSaving(false);
     setSavedAt(new Date().toLocaleTimeString("pt-PT"));
   }
@@ -200,29 +237,48 @@ export default function Perfil() {
             </label>
           ))}
 
-          <label className="block sm:col-span-2">
-            <span className="field-label">Situação fiscal regularizada?</span>
-            <div className="flex gap-2">
-              {[
-                [true, "Sim"],
-                [false, "Não"],
-              ].map(([v, label]) => (
-                <button
-                  key={String(v)}
-                  type="button"
-                  onClick={() => setProfile({ ...profile, tax_situation_ok: v })}
-                  className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium ${
-                    profile.tax_situation_ok === v
-                      ? "border-soil bg-soil text-cream"
-                      : "border-clay/30 bg-white/70 text-soil"
-                  }`}
-                >
-                  {label as string}
-                </button>
-              ))}
-            </div>
-          </label>
         </div>
+
+        {/* Campos Sim/Não — elegibilidade */}
+        <div className="mt-6 border-t border-clay/10 pt-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink/50">
+            Dados de elegibilidade
+          </p>
+          <p className="mt-0.5 text-xs text-ink/45">
+            Respondidos uma vez, valem para todos os domínios.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {YESNO_FIELDS.map((f) => (
+              <div key={f.field} className="block">
+                <span className="field-label">{f.label}</span>
+                {f.hint && (
+                  <span className="mb-1 block text-xs text-ink/45">
+                    {f.hint}
+                  </span>
+                )}
+                <div className="flex gap-2">
+                  {([true, false] as const).map((v) => (
+                    <button
+                      key={String(v)}
+                      type="button"
+                      onClick={() =>
+                        setProfile({ ...profile, [f.field]: v })
+                      }
+                      className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium ${
+                        profile[f.field] === v
+                          ? "border-soil bg-soil text-cream"
+                          : "border-clay/30 bg-white/70 text-soil"
+                      }`}
+                    >
+                      {v ? "Sim" : "Não"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-5 flex items-center gap-3">
           <button className="btn-primary" disabled={saving} onClick={save}>
             {saving ? "A guardar…" : "Guardar dados"}

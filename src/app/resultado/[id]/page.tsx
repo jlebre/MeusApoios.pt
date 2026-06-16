@@ -132,7 +132,7 @@ export default async function Resultado({
     (e) => e.verdict === "elegivel" || e.verdict === "em_risco"
   );
   const totalPotential = candidataveis.reduce((s, e) => s + e.sim.total, 0);
-  const unlocked = !!project.unlocked;
+  const unlocked = true; // paywall temporariamente desativada
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
