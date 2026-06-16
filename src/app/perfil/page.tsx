@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 import { calculateAge, EMPLOYMENT_STATUS_OPTIONS } from "@/lib/utils";
 
 type FieldDef =
@@ -131,22 +131,27 @@ export default function Perfil() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-display text-xl font-black tracking-tight text-soil"
-        >
-          <BrandLogo />
-        </Link>
-        <button onClick={signOut} className="text-sm text-clay underline">
+      <NavBar />
+
+      <div className="mt-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-black text-soil">
+            O meu perfil
+          </h1>
+          <p className="text-ink/60">{email}</p>
+        </div>
+        <button onClick={signOut} className="shrink-0 text-sm text-clay underline">
           Sair
         </button>
       </div>
 
-      <h1 className="mt-8 font-display text-3xl font-black text-soil">
-        O meu perfil
-      </h1>
-      <p className="text-ink/60">{email}</p>
+      {/* Explicação do valor do perfil */}
+      <div className="mt-4 rounded-xl border border-mint/40 bg-mint/5 p-4 text-sm text-ink/70">
+        <strong className="text-soil">Para que serve preencher o perfil?</strong>{" "}
+        Os dados que guardas aqui são reutilizados em todos os diagnósticos — as
+        perguntas já respondidas são <strong>saltadas automaticamente</strong>.
+        Preenchas uma vez, todas as áreas ficam mais rápidas.
+      </div>
 
       {/* Dados transversais */}
       <section className="mt-6 rounded-2xl border border-clay/20 bg-white/60 p-6">

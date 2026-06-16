@@ -7,7 +7,7 @@ import Link from "next/link";
 import dynamicImport from "next/dynamic";
 import { track } from "@/lib/track";
 import { getBrowserClient } from "@/lib/supabase-browser";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 import { calculateAge } from "@/lib/utils";
 
 const LocationMap = dynamicImport(() => import("@/components/LocationMap"), {
@@ -219,9 +219,7 @@ function DiagnosticoInner() {
   if (sections.length === 0 && allSections.length > 0) {
     return (
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <Link href="/areas" className="font-display text-xl font-black tracking-tight text-soil">
-          <BrandLogo />
-        </Link>
+        <NavBar />
         <div className="mt-10 rounded-2xl border border-mint/40 bg-mint/5 p-7 text-center">
           <div className="text-3xl">✓</div>
           <h2 className="mt-3 font-display text-2xl font-black text-soil">
@@ -275,12 +273,7 @@ function DiagnosticoInner() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link
-        href="/areas"
-        className="font-display text-xl font-black tracking-tight text-soil"
-      >
-        <BrandLogo />
-      </Link>
+      <NavBar />
 
       {/* Banner de perfil pré-preenchido */}
       {prefilledCount > 0 && (

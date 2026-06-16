@@ -1,5 +1,5 @@
 import Link from "next/link";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 import { BRAND } from "@/lib/brand";
 
 export const metadata = {
@@ -8,13 +8,8 @@ export const metadata = {
 
 export default function Termos() {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <Link
-        href="/"
-        className="font-display text-xl font-black tracking-tight text-soil"
-      >
-        <BrandLogo />
-      </Link>
+    <main className="mx-auto max-w-2xl px-6 py-10">
+      <NavBar />
 
       <h1 className="mt-8 font-display text-3xl font-black text-soil">
         Termos de utilização e tratamento de dados

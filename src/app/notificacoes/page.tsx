@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 
 export default function Notificacoes() {
   const [email, setEmail] = useState("");
@@ -53,13 +53,8 @@ export default function Notificacoes() {
     );
 
   return (
-    <main className="mx-auto max-w-md px-6 py-12">
-      <Link
-        href="/"
-        className="font-display text-xl font-black tracking-tight text-soil"
-      >
-        <BrandLogo />
-      </Link>
+    <main className="mx-auto max-w-md px-6 py-10">
+      <NavBar />
 
       <h1 className="mt-8 font-display text-3xl font-black text-soil">
         Avisa-me de novos apoios

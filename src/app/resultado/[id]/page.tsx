@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 import {
   evaluateFund,
   simulateAmount,
@@ -88,14 +88,14 @@ export default async function Resultado({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <Link
-        href="/"
-        className="font-display text-xl font-black tracking-tight text-soil"
-      >
-        <BrandLogo />
-      </Link>
+      <NavBar />
+      <div className="mt-3 flex items-center gap-2 text-sm text-ink/50">
+        <Link href="/perfil" className="hover:text-clay">Os meus diagnósticos</Link>
+        <span>/</span>
+        <span className="text-ink/70">Resultado</span>
+      </div>
 
-      <h1 className="mt-8 font-display text-3xl sm:text-4xl font-black text-soil">
+      <h1 className="mt-6 font-display text-3xl sm:text-4xl font-black text-soil">
         A tua primeira leitura
       </h1>
       <p className="mt-2 text-ink/70">

@@ -1,6 +1,6 @@
 import { createServiceClient } from "@/lib/supabase";
 import Link from "next/link";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -56,14 +56,11 @@ export default async function ApoioDetalhe({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <div className="flex items-center gap-4">
-        <Link href="/" className="font-display text-xl font-black tracking-tight text-soil">
-          <BrandLogo />
-        </Link>
-        <span className="text-ink/30">/</span>
-        <Link href="/apoios" className="text-sm text-clay underline">
-          Apoios
-        </Link>
+      <NavBar />
+      <div className="mt-4 flex items-center gap-2 text-sm text-ink/50">
+        <Link href="/apoios" className="hover:text-clay">Apoios</Link>
+        <span>/</span>
+        <span className="truncate text-ink/70">{fund.name}</span>
       </div>
 
       {/* Cabeçalho */}

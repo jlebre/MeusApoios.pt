@@ -1,6 +1,6 @@
 import { createServiceClient } from "@/lib/supabase";
 import Link from "next/link";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 import ApoiosClient from "./ApoiosClient";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +19,7 @@ export default async function Apoios() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <Link href="/" className="font-display text-xl font-black tracking-tight text-soil">
-        <BrandLogo />
-      </Link>
+      <NavBar />
 
       <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
         <div>

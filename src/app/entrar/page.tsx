@@ -6,7 +6,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getBrowserClient } from "@/lib/supabase-browser";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 
 function EntrarInner() {
   const params = useSearchParams();
@@ -51,13 +51,8 @@ function EntrarInner() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-16">
-      <Link
-        href="/"
-        className="font-display text-xl font-black tracking-tight text-soil"
-      >
-        <BrandLogo />
-      </Link>
+    <main className="mx-auto max-w-md px-6 py-10">
+      <NavBar />
 
       <h1 className="mt-10 font-display text-3xl font-black text-soil">
         {mode === "login" ? "Entrar" : "Criar conta"}

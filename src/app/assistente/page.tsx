@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import BrandLogo from "@/components/BrandLogo";
+import NavBar from "@/components/NavBar";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -84,13 +84,8 @@ function AssistenteInner() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-8">
-      <div className="flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-display text-xl font-black tracking-tight text-soil"
-        >
-          <BrandLogo />
-        </Link>
+      <NavBar />
+      <div className="mt-3 flex items-center gap-2">
         <span className="rounded-full bg-wheat/20 px-3 py-1 text-xs font-semibold text-clay">
           Assistente · Premium
         </span>
