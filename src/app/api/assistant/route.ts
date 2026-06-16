@@ -48,7 +48,8 @@ export async function POST(req: Request) {
 
     const { data: funds } = await supabase
       .from("funding_opportunities")
-      .select("*, eligibility_rules(*), funding_amounts(*)");
+      .select("*, eligibility_rules(*), funding_amounts(*)")
+      .neq("publish_status", "rascunho");
 
     const grounded = (funds ?? [])
       .map((f: any) => {
@@ -60,9 +61,10 @@ export async function POST(req: Request) {
           (f.funding_amounts || []) as Amount[],
           project
         );
-        return { name: f.name, verdict: VERDICT_LABEL[verdict], estimate: sim.total };
+        return { name: f.name, verdict, estimate: sim.total };
       })
-      .filter((g) => g.verdict !== "Provavelmente não elegível");
+      .filter((g) => g.verdict !== "inelegivel")
+      .map((g) => ({ ...g, verdict: VERDICT_LABEL[g.verdict as keyof typeof VERDICT_LABEL] }));
 
     // 3. Contexto factual para o modelo (a "verdade" calculada)
     const factContext = `Apoios analisados para este utilizador (calculado pelo motor, não inventar):

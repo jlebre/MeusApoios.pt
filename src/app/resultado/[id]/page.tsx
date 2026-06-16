@@ -4,12 +4,17 @@ import {
   evaluateFund,
   simulateAmount,
   checkZone,
+  prioritize,
+  buildComparison,
   VERDICT_LABEL,
   VERDICT_COLOR,
   type Rule,
   type Amount,
   type Zone,
 } from "@/lib/eligibility";
+import FundComparator from "@/components/FundComparator";
+import ValueSimulator from "@/components/ValueSimulator";
+import ApplicationGuide from "@/components/ApplicationGuide";
 import UnlockButton from "@/components/UnlockButton";
 
 export const dynamic = "force-dynamic";
@@ -211,6 +216,121 @@ export default async function Resultado({
               ⬇ Descarregar PDF
             </Link>
           </div>
+
+          {/* Priorização: por onde começar */}
+          {(() => {
+            const ranked = prioritize(
+              evaluated.map((e) => ({ fund: e.fund, verdict: e.verdict, sim: e.sim }))
+            );
+            if (ranked.length === 0) return null;
+            return (
+              <div className="rounded-2xl border border-mint/40 bg-mint/5 p-6">
+                <h2 className="font-display text-xl font-black text-ink">
+                  Por onde começar
+                </h2>
+                <p className="mt-1 text-sm text-slate">
+                  A nossa sugestão de ordem, pesando o valor, o prazo e a
+                  facilidade de cada apoio para o teu caso.
+                </p>
+                <ol className="mt-4 space-y-3">
+                  {ranked.slice(0, 5).map((r, i) => (
+                    <li
+                      key={r.fund.id}
+                      className="flex gap-3 rounded-xl bg-white p-4"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ocean font-display text-sm font-black text-white">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-ink">
+                            {r.fund.name}
+                          </span>
+                          {r.urgent && (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                              Urgente
+                            </span>
+                          )}
+                        </div>
+                        {r.reasons.length > 0 && (
+                          <p className="mt-1 text-sm text-slate">
+                            {r.reasons.join(" · ")}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            );
+          })()}
+
+          {/* Comparador (premium) */}
+          {(() => {
+            const rows = buildComparison(
+              evaluated.map((e) => ({ fund: e.fund, verdict: e.verdict, sim: e.sim }))
+            );
+            if (rows.length < 2) return null;
+            return <FundComparator rows={rows} />;
+          })()}
+
+          {/* Simulador de valores (premium) */}
+          {(() => {
+            const simFunds = evaluated
+              .filter((e) => e.verdict !== "inelegivel")
+              .map((e) => ({
+                id: e.fund.id,
+                name: e.fund.name,
+                amounts: e.fund.funding_amounts || [],
+              }))
+              .filter((f) => f.amounts.length > 0);
+            if (simFunds.length === 0) return null;
+            return (
+              <ValueSimulator
+                funds={simFunds}
+                initialBudget={Number(project.budget_eur) || 20000}
+              />
+            );
+          })()}
+
+          {/* Guias de candidatura (premium) — para os candidatáveis */}
+          {(() => {
+            const guias = evaluated.filter(
+              (e) =>
+                (e.verdict === "elegivel" || e.verdict === "em_risco") &&
+                (e.fund.funding_documents_required || []).length > 0
+            );
+            if (guias.length === 0) return null;
+            return (
+              <div className="space-y-4">
+                <h2 className="font-display text-xl font-black text-ink">
+                  Como avançar com cada apoio
+                </h2>
+                {guias.map((e) => (
+                  <ApplicationGuide
+                    key={e.fund.id}
+                    projectId={project.id}
+                    fund={{
+                      id: e.fund.id,
+                      name: e.fund.name,
+                      platform_url: e.fund.platform_url,
+                      source_url: e.fund.source_url,
+                      closes_at: e.fund.closes_at,
+                      documents: (e.fund.funding_documents_required || [])
+                        .slice()
+                        .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                        .map((d: any) => ({
+                          id: d.id,
+                          name: d.name,
+                          how_to_get: d.how_to_get,
+                          official_url: d.official_url,
+                        })),
+                    }}
+                  />
+                ))}
+              </div>
+            );
+          })()}
           {evaluated.map(({ fund, verdict, results, sim, zone }) => (
             <div
               key={fund.id}

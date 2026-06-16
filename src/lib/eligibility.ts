@@ -204,3 +204,123 @@ export const VERDICT_COLOR: Record<FundVerdict, string> = {
   confirmar: "#7a4a2b",
   inelegivel: "#9b3b2f",
 };
+
+// ============================================================
+// PRIORIZAÇÃO INTELIGENTE (feature premium)
+// ============================================================
+// Combina três fatores num score de 0-100 e EXPLICA o porquê:
+//  - Valor: quanto mais euros, melhor.
+//  - Prazo: quanto mais perto de fechar, mais urgente.
+//  - Facilidade: menor complexidade = mais alcançável.
+// Só faz sentido para apoios a que a pessoa é candidatável.
+
+export type PriorityInput = {
+  fund: any;
+  verdict: FundVerdict;
+  sim: { total: number };
+};
+
+export type PriorityResult = PriorityInput & {
+  score: number;
+  reasons: string[];
+  urgent: boolean;
+};
+
+export function prioritize(items: PriorityInput[]): PriorityResult[] {
+  // só prioriza candidatáveis (elegível / em risco / confirmar)
+  const candidatos = items.filter((i) => i.verdict !== "inelegivel");
+  const maxValue = Math.max(1, ...candidatos.map((i) => i.sim.total || 0));
+  const today = new Date();
+
+  const scored = candidatos.map((i): PriorityResult => {
+    const reasons: string[] = [];
+
+    // --- Valor (0-45 pontos) ---
+    const valueScore = ((i.sim.total || 0) / maxValue) * 45;
+    if (i.sim.total > 0 && i.sim.total >= maxValue * 0.6) {
+      reasons.push(`Valor elevado (~${i.sim.total.toLocaleString("pt-PT")}€)`);
+    }
+
+    // --- Prazo (0-35 pontos) + urgência ---
+    let deadlineScore = 12; // sem prazo conhecido = neutro-baixo
+    let urgent = false;
+    const closes = i.fund.closes_at ? new Date(i.fund.closes_at) : null;
+    if (closes && !isNaN(closes.getTime())) {
+      const days = Math.ceil((closes.getTime() - today.getTime()) / 86400000);
+      if (days < 0) {
+        deadlineScore = 0;
+        reasons.push("Prazo terminado — confirma se reabre");
+      } else if (days <= 30) {
+        deadlineScore = 35;
+        urgent = true;
+        reasons.push(`Fecha em ${days} dia(s) — urgente`);
+      } else if (days <= 90) {
+        deadlineScore = 25;
+        reasons.push(`Fecha dentro de ~${Math.round(days / 30)} meses`);
+      } else {
+        deadlineScore = 18;
+      }
+    }
+
+    // --- Facilidade (0-20 pontos) ---
+    const complexity = (i.fund.complexity || "media").toLowerCase();
+    let easeScore = 10;
+    if (complexity === "baixa") {
+      easeScore = 20;
+      reasons.push("Processo simples");
+    } else if (complexity === "alta") {
+      easeScore = 5;
+      reasons.push("Processo exigente — prepara-te com tempo");
+    }
+
+    // --- Bónus por elegibilidade clara ---
+    let verdictBonus = 0;
+    if (i.verdict === "elegivel") {
+      verdictBonus = 5;
+      reasons.push("Encaixas nos critérios");
+    } else if (i.verdict === "confirmar") {
+      reasons.push("Falta confirmar alguns dados");
+    }
+
+    const score = Math.round(valueScore + deadlineScore + easeScore + verdictBonus);
+    return { ...i, score: Math.min(100, score), reasons, urgent };
+  });
+
+  return scored.sort((a, b) => b.score - a.score);
+}
+
+// ============================================================
+// COMPARADOR (feature premium)
+// ============================================================
+// Prepara apoios para comparação lado a lado nas dimensões-chave.
+export type CompareRow = {
+  fund: any;
+  verdict: FundVerdict;
+  value: number;
+  complexity: string;
+  closesAt: string | null;
+  daysLeft: number | null;
+};
+
+export function buildComparison(
+  items: { fund: any; verdict: FundVerdict; sim: { total: number } }[]
+): CompareRow[] {
+  const today = new Date();
+  return items
+    .filter((i) => i.verdict !== "inelegivel")
+    .map((i) => {
+      const closes = i.fund.closes_at ? new Date(i.fund.closes_at) : null;
+      const daysLeft =
+        closes && !isNaN(closes.getTime())
+          ? Math.ceil((closes.getTime() - today.getTime()) / 86400000)
+          : null;
+      return {
+        fund: i.fund,
+        verdict: i.verdict,
+        value: i.sim.total || 0,
+        complexity: (i.fund.complexity || "media").toLowerCase(),
+        closesAt: i.fund.closes_at || null,
+        daysLeft,
+      };
+    });
+}

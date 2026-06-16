@@ -43,7 +43,8 @@ export default async function ResultadoPDF({
 
   let fundsQuery = supabase
     .from("funding_opportunities")
-    .select("*, eligibility_rules(*), funding_amounts(*), funding_documents_required(*)");
+    .select("*, eligibility_rules(*), funding_amounts(*), funding_documents_required(*)")
+    .neq("publish_status", "rascunho");
   if (project.domain_id) fundsQuery = fundsQuery.eq("domain_id", project.domain_id);
   const { data: funds } = await fundsQuery;
 
